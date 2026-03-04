@@ -76,7 +76,9 @@ Please output your desired action in EXACTLY this markdown format:
 Here are the valid ACTION_NAMEs and parameters you can choose from:
 ${toolList}
 
-Remember, you MUST provide at least one \`\`\`json action ... \`\`\` block in every response.`;
+CRITICAL RULES:
+1. You MUST provide at least one \`\`\`json action ... \`\`\` block in every response.
+2. If you are waiting for me to give you a task, or you want to ask me a question, DO NOT run meaningless terminal commands (like "echo ready"). Instead, use the appropriate communication tool (such as AskFollowupQuestion, ask_followup_question, or attempt_completion).`;
 }
 
 // ==================== 请求转换 ====================
@@ -138,7 +140,7 @@ export function convertToCursorRequest(req: AnthropicRequest): CursorChatRequest
 
         // 在每条用户消息末尾追加格式提醒
         if (hasTools && msg.role === 'user') {
-            text += '\n\n[Reminder: Please output a ```json action block for the action you want to take.]';
+            text += '\n\n[Reminder: Please output a ```json action block for the action you want to take. If you have no task or want to respond, use AskFollowupQuestion or ask_followup_question or attempt_completion, DO NOT use Bash/execute_command]';
         }
 
         messages.push({
