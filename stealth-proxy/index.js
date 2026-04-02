@@ -306,27 +306,44 @@ app.post('/proxy/chat', async (req, res) => {
 
 // ==================== 启动 ====================
 
+const MAX_INIT_RETRIES = parseInt(process.env.MAX_INIT_RETRIES || '5');
+
 (async () => {
-    try {
-        await initBrowser();
+    // 自动重试启动：网络不稳定时多试几次
+    for (let attempt = 1; attempt <= MAX_INIT_RETRIES; attempt++) {
+        try {
+            console.log(`[Stealth] Initialization attempt ${attempt}/${MAX_INIT_RETRIES}...`);
+            await initBrowser();
+            break; // 成功，跳出重试循环
+        } catch (e) {
+            console.error(`[Stealth] Attempt ${attempt} failed:`, e.message);
+            // 清理失败的浏览器实例
+            if (browser) await browser.close().catch(() => {});
+            browser = null; context = null; challengePage = null; workerPage = null;
 
-        app.listen(PORT, '0.0.0.0', () => {
-            console.log(`[Stealth] Proxy listening on port ${PORT}`);
-        });
-
-        // 定时刷新 challenge
-        setInterval(refreshChallenge, REFRESH_INTERVAL);
-
-        // 浏览器崩溃恢复
-        browser.on('disconnected', () => {
-            console.error('[Stealth] Browser disconnected! Restarting...');
-            ready = false;
-            setTimeout(restartBrowser, 3000);
-        });
-    } catch (e) {
-        console.error('[Stealth] Fatal error:', e);
-        process.exit(1);
+            if (attempt >= MAX_INIT_RETRIES) {
+                console.error(`[Stealth] All ${MAX_INIT_RETRIES} attempts failed, exiting.`);
+                process.exit(1);
+            }
+            const delay = attempt * 5;
+            console.log(`[Stealth] Retrying in ${delay}s...`);
+            await new Promise(r => setTimeout(r, delay * 1000));
+        }
     }
+
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`[Stealth] Proxy listening on port ${PORT}`);
+    });
+
+    // 定时刷新 challenge
+    setInterval(refreshChallenge, REFRESH_INTERVAL);
+
+    // 浏览器崩溃恢复
+    browser.on('disconnected', () => {
+        console.error('[Stealth] Browser disconnected! Restarting...');
+        ready = false;
+        setTimeout(restartBrowser, 3000);
+    });
 })();
 
 // 优雅退出
