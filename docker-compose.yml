@@ -88,6 +88,8 @@ services:
       # 镜像已内置 stealth-proxy，设置 ENABLE_STEALTH=true 即可自动启动
       # 无需额外容器，stealth-proxy 在同一容器内运行并自动连接
       - ENABLE_STEALTH=true
+      # 如果 IP 被 Vercel 风控，可配置代理让浏览器走干净 IP
+      # - BROWSER_PROXY=http://host.docker.internal:7890
 
       # ── 响应内容清洗 ──
       # 开启后会将响应中 Cursor 身份引用替换为 Claude（默认关闭）

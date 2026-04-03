@@ -17,6 +17,7 @@ const crypto = require('crypto');
 const PORT = parseInt(process.env.PORT || '3011');
 const CHALLENGE_URL = process.env.CHALLENGE_URL || 'https://cursor.com/cn/docs';
 const REFRESH_INTERVAL = parseInt(process.env.REFRESH_INTERVAL || '3000000'); // 50 分钟
+const BROWSER_PROXY = process.env.BROWSER_PROXY || ''; // 浏览器代理，如 http://host:7890 或 socks5://host:1080
 const CHALLENGE_WAIT = parseInt(process.env.CHALLENGE_WAIT || '55000'); // challenge 最长等待时间
 
 let browser, context, challengePage, workerPage;
@@ -77,6 +78,12 @@ async function initBrowser() {
         console.log(`[Stealth] Using system Chrome: ${chromePath}`);
     } else {
         console.log('[Stealth] System Chrome not found, using Playwright Chromium');
+    }
+
+    // 浏览器级代理（用于 IP 被风控时走干净代理）
+    if (BROWSER_PROXY) {
+        launchOptions.proxy = { server: BROWSER_PROXY };
+        console.log(`[Stealth] Browser proxy: ${BROWSER_PROXY}`);
     }
 
     console.log('[Stealth] Launching browser...');
